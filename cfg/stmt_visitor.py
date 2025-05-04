@@ -305,16 +305,20 @@ class StmtVisitor(ast.NodeVisitor):
 
         if node.values and isinstance(node.values[0], (ast.Call, ast.Invoke)):
             return_value_of_call = self.visit(node.values[0])
+            
+            # ✅ 安全處理
+            lhs_str = getattr(return_value_of_call, 'left_hand_side', 'UNKNOWN')
             return_node = ReturnNode(
-                LHS + ' = ' + return_value_of_call.left_hand_side,
+                LHS + ' = ' + lhs_str,
                 LHS,
                 node,
-                [return_value_of_call.left_hand_side],
+                [lhs_str],
                 path=self.filenames[-1]
             )
             return_value_of_call.connect(return_node)
             return self.append_node(return_node)
-        elif node.values and len(node.values)>0:
+
+        elif node.values and len(node.values) > 0:
             rhs_visitor_result = RHSVisitor.result_for_node(node.values[0])
         else:
             rhs_visitor_result = []
@@ -326,6 +330,7 @@ class StmtVisitor(ast.NodeVisitor):
             rhs_visitor_result,
             path=self.filenames[-1]
         ))
+
 
     def handle_stmt_star_ignore_node(self, body, fallback_cfg_node):
         try:
